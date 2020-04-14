@@ -88,12 +88,56 @@ class LoggerForReservations():
         return wrapper
 
     # decorators for Reservation - type functions used for creating strings
+    def reservation_init(function):
+        @LoggerForReservations.LoggerPrinter
+        def wrapper(self, *args, **kwargs):
+            function(self, *args, **kwargs)
+            self.messageToPrint = "Reservation create for {} of book {} from {} to {}.".format(self._id, self._book,
+                                                                                               self._from, self._to)
+        return wrapper
+
+    def reservation_is_overlapping(function):
+        @LoggerForReservations.LoggerPrinter
+        def wrapper(self, other):
+            ret = function(self, other)
+            str = 'overlaps'
+            if not ret:
+                str = 'does not overlap'
+            self.messageToPrint = "The {} reservation {} with the {} reservation.".format(self._id, str, other._id)
+            return ret
+        return wrapper
+
+    def reservation_includes(function):
+        @LoggerForReservations.LoggerPrinter
+        def wrapper(self, date):
+            ret = function(self, date)
+            str = 'includes'
+            if not ret:
+                str = 'does not include'
+            self.messageToPrint = "Reservation {} {} {}".format(self._id, str, date)
+            return ret
+        return wrapper
+
+    def reservation_identify(function):
+        @LoggerForReservations.LoggerPrinter
+        def wrapper(self, date, book, for_):
+            ret = function(self, date, book, for_)
+            if not ret:
+                if book != self._book:
+                    self.messageToPrint = "Reservation {} reserver {} not {}.".format(self._id, self._book, book)
+                elif for_ != self._for:
+                    self.messageToPrint = ("Reservation {} is for {} not {}".format(self._id, self._for, for_))
+                elif not self.includes(date):
+                    self.messageToPrint = ("Reservation {} is from {} to ".format(self._id, self._from) +
+                                           "{} which does not include {}.".format(self._to, date))
+            else
 
 
 
 class Reservation(object):
     _ids = count(0)
 
+    @LoggerForReservations.library_init
     def __init__(self, from_, to, book, for_):
         self._id = next(Reservation._ids)
         self._from = from_
@@ -102,10 +146,12 @@ class Reservation(object):
         self._for = for_
         self._changes = 0
 
+    @LoggerForReservations.reservation_is_overlapping
     def overlapping(self, other):
         return (self._book == other._book and self._to >= other._from
                 and self._to >= other._from)
 
+    @LoggerForReservations.reservation_includes
     def includes(self, date):
         ret = (self._from <= date <= self._to)
         str = 'includes'
@@ -114,6 +160,7 @@ class Reservation(object):
         print(F'Reservation {self._id} {str} {date}')
         return ret
 
+    @LoggerForReservations.reservation_identify
     def identify(self, date, book, for_):
         if book != self._book:
             print(F'Reservation {self._id} reserves {self._book} not {book}.')
