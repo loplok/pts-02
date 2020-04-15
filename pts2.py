@@ -2,154 +2,170 @@ from itertools import count
 
 
 # decorators used for Library - type functions used for creating strings
-class LoggerForReservations():
-    def __init__(self):
-        self.messageToPrint = ''
+class LoggerForReservations:
+    messageToPrint = ""
 
-    def LoggerPrinter(function):
+    def loggerPrinter(function):
         def wrapper(self, *args, **kwargs):
-            result = function(self, args, kwargs)
-            print(self.messageToPrint)
+            result = function(self, *args, **kwargs)
+            print(LoggerForReservations.messageToPrint)
             return result
 
         return wrapper
 
     def library_init(function):
-        @LoggerForReservations.LoggerPrinter
+        @LoggerForReservations.loggerPrinter
         def wrapper(self, *args, **kwargs):
             function(self, *args, **kwargs)
-            self.messageToPrint = "Library created."
-
+            LoggerForReservations.messageToPrint = "Library created."
         return wrapper
 
     def library_add_user(function):
-        @LoggerForReservations.LoggerPrinter
+        @LoggerForReservations.loggerPrinter
         def wrapper(self, name):
             is_added = function(self, name)
-            self.messageToPrint = "User {} created".format(name)
+            LoggerForReservations.messageToPrint = "User {} created".format(name)
             if not is_added:
-                self.messageToPrint = "User {} cannot be created, one with that name exists.".format(name)
+                LoggerForReservations.messageToPrint = "User {} cannot be created, one with that name exists.".format(
+                    name)
             return is_added
-
         return wrapper
 
     def library_add_book(function):
-        @LoggerForReservations.LoggerPrinter
+        @LoggerForReservations.loggerPrinter
         def wrapper(self, name):
             function(self, name)
-            self.messageToPrint = "Book {} added. We have {} copies of the book".format(name, self._books[name])
+            LoggerForReservations.messageToPrint = "Book {} added. We have {} copies of the book".format(name,
+                                                                                                         self._books[
+                                                                                                             name])
             return wrapper
 
     def library_reserve_book(function):
-        @LoggerForReservations.LoggerPrinter
+        @LoggerForReservations.loggerPrinter
         def wrapper(self, user, book, date_from, date_to):
             is_reserved = function(self, user, book, date_from, date_to)
             if is_reserved >= 0:
-                self.messageToPrint = "Reservation {} included".format(is_reserved)
+                LoggerForReservations.messageToPrint = "Reservation {} included".format(is_reserved)
             else:
                 if user not in self._users:
-                    self.messageToPrint = ("We cannot reserve book {} for {} ".format(book, user) +
-                                           "from {} to {}. User does not exist.".format(date_from, date_to))
+                    LoggerForReservations.messageToPrint = ("We cannot reserve book {} for {} ".format(book, user) +
+                                                            "from {} to {}. User does not exist.".format(date_from,
+                                                                                                         date_to))
                     return False
                 elif date_to < date_from:
-                    self.messageToPrint = ("We cannot reserve book {} for {}".format(book, user) +
-                                           " from {} to {}.".format(date_from, date_to) + " Incorrect dates.")
+                    LoggerForReservations.messageToPrint = ("We cannot reserve book {} for {}".format(book, user) +
+                                                            " from {} to {}.".format(date_from,
+                                                                                     date_to) + " Incorrect dates.")
                     return False
                 elif self._books.get(book, 0) == 0:
-                    self.messageToPrint = ("We cannot reserve book {} for {} from {} ".format(book, user, date_from)
-                                           + "to {}. We do not have that book.".format(date_to))
+                    LoggerForReservations.messageToPrint = (
+                            "We cannot reserve book {} for {} from {} ".format(book, user, date_from)
+                            + "to {}. We do not have that book.".format(date_to))
                     return False
                 else:
-                    self.messageToPrint = ("We cannot reserve book {} for {} from {} ".format(book, user, date_from)
-                                           + "to {} . We do not have enough books.".format(date_to))
+                    LoggerForReservations.messageToPrint = (
+                            "We cannot reserve book {} for {} from {} ".format(book, user, date_from)
+                            + "to {} . We do not have enough books.".format(date_to))
                     return False
             return True
 
         return wrapper
 
     def library_check_reservation(function):
-        @LoggerForReservations.LoggerPrinter
+        @LoggerForReservations.loggerPrinter
         def wrapper(self, user, book, date):
             is_added = function(self, user, book, date)
             str = 'exists'
             if not is_added:
                 str = 'does not exist'
-            self.messageToPrint = "Reservation for {} of {} on {} {}.".format(user, book, date, str)
+            LoggerForReservations.messageToPrint = "Reservation for {} of {} on {} {}.".format(user, book, date, str)
             return is_added
 
         return wrapper
 
     def library_change_reservation(function):
-        @LoggerForReservations.LoggerPrinter
+        @LoggerForReservations.loggerPrinter
         def wrapper(self, user, book, date, new_user):
             is_identical_reservation = function(self, user, book, date, new_user)
             if not is_identical_reservation:
-                self.messageToPrint = "Reservation for {} of {} on {} does not exist".format(user, book, date)
+                LoggerForReservations.messageToPrint = "Reservation for {} of {} on {} does not exist".format(user,
+                                                                                                              book,
+                                                                                                              date)
             elif new_user not in self._users:
-                self.messageToPrint = "Cannot change the reservation as {} does not exist.".format(new_user)
+                LoggerForReservations.messageToPrint = ("Cannot change the reservation as {} " +
+                                                        "does not exist.".format(new_user))
             else:
-                self.messageToPrint = "Reservation for {} of {} on {} change to {}.".format(user, book, date, new_user)
+                LoggerForReservations.messageToPrint = "Reservation for {} of {} on {} change to {}.".format(user, book,
+                                                                                                             date,
+                                                                                                             new_user)
             return is_identical_reservation
 
         return wrapper
 
     # decorators for Reservation - type functions used for creating strings
     def reservation_init(function):
-        @LoggerForReservations.LoggerPrinter
+        @LoggerForReservations.loggerPrinter
         def wrapper(self, *args, **kwargs):
             function(self, *args, **kwargs)
-            self.messageToPrint = "Reservation create for {} of book {} from {} to {}.".format(self._id, self._book,
-                                                                                               self._from, self._to)
+            LoggerForReservations.messageToPrint = ("Created a reservation with id {} of {} " +
+                                                    "from {} to {} for {}.".
+                                                    format(self._id, self._book, self._from, self._to, self._for))
 
         return wrapper
 
     def reservation_is_overlapping(function):
-        @LoggerForReservations.LoggerPrinter
+        @LoggerForReservations.loggerPrinter
         def wrapper(self, other):
             ret = function(self, other)
-            str = 'overlaps'
+            str = 'do'
             if not ret:
-                str = 'does not overlap'
-            self.messageToPrint = "The {} reservation {} with the {} reservation.".format(self._id, str, other._id)
+                str = 'do not'
+            LoggerForReservations.messageToPrint = "Reservations {} and {} {} overlap.".format(self._id, str, other._id,
+                                                                                               str)
             return ret
 
         return wrapper
 
     def reservation_includes(function):
-        @LoggerForReservations.LoggerPrinter
+        @LoggerForReservations.loggerPrinter
         def wrapper(self, date):
             ret = function(self, date)
             str = 'includes'
             if not ret:
                 str = 'does not include'
-            self.messageToPrint = "Reservation {} {} {}".format(self._id, str, date)
+            LoggerForReservations.messageToPrint = "Reservation {} {} {}".format(self._id, str, date)
             return ret
 
         return wrapper
 
     def reservation_identify(function):
-        @LoggerForReservations.LoggerPrinter
+        @LoggerForReservations.loggerPrinter
         def wrapper(self, date, book, for_):
             ret = function(self, date, book, for_)
             if not ret:
                 if book != self._book:
-                    self.messageToPrint = "Reservation {} reserver {} not {}.".format(self._id, self._book, book)
+                    LoggerForReservations.messageToPrint = "Reservation {} reserved {} not {}.".format(self._id,
+                                                                                                       self._book, book)
                 elif for_ != self._for:
-                    self.messageToPrint = ("Reservation {} is for {} not {}".format(self._id, self._for, for_))
+                    LoggerForReservations.messageToPrint = ("Reservation {} is for {} not {}".format(self._id,
+                                                                                                     self._for, for_))
                 elif not self.includes(date):
-                    self.messageToPrint = ("Reservation {} is from {} to ".format(self._id, self._from) +
-                                           "{} which does not include {}.".format(self._to, date))
+                    LoggerForReservations.messageToPrint = ("Reservation {} is from {} to ".format(self._id, self._from)
+                                                            +
+                                                            "{} which does not include {}.".format(self._to, date))
             else:
-                self.messageToPrint = "Reservation {} is valid {} of {} on {}.".format(self._id, for_, book, date)
+                LoggerForReservations.messageToPrint = "Reservation {} is valid {} of {} on {}.".format(self._id,
+                                                                                                        for_, book,
+                                                                                                        date)
             return ret
 
         return wrapper
 
     def reservation_change_for(function):
-        @LoggerForReservations.LoggerPrinter
+        @LoggerForReservations.loggerPrinter
         def wrapper(self, for_):
             function(self, for_)
-            self.messageToPrint = "Reservation updated to {}.".format(for_)
+            LoggerForReservations.messageToPrint = "Reservation updated to {}.".format(for_)
 
         return wrapper
 
@@ -198,7 +214,7 @@ class Library(object):
         self._books = {}  # maps name to count
         self._reservations = []  # Reservations sorted by from
 
-    @LoggerForReservations.library_add_book
+    @LoggerForReservations.library_add_user
     def add_user(self, name):
         if name in self._users:
             return False
@@ -209,15 +225,15 @@ class Library(object):
     def add_book(self, name):
         self._books[name] = self._books.get(name, 0) + 1
 
-    @LoggerForReservations.library_resNoneerve_book
+    @LoggerForReservations.library_reserve_book
     def reserve_book(self, user, book, date_from, date_to):
         book_count = self._books.get(book, 0)
         if user not in self._users:
-            return False
+            return -1
         if date_from > date_to:
-            return False
+            return -1
         if book_count == 0:
-            return False
+            return -1
         desired_reservation = Reservation(date_from, date_to, book, user)
         relevant_reservations = [res for res in self._reservations
                                  if desired_reservation.overlapping(res)] + [desired_reservation]
@@ -226,15 +242,14 @@ class Library(object):
         for from_ in [res._from for res in relevant_reservations]:
             if desired_reservation.includes(from_):
                 if sum([rec.includes(from_) for rec in relevant_reservations]) > book_count:
-                    return False
+                    return -1
         self._reservations += [desired_reservation]
         self._reservations.sort(key=lambda x: x._from)  # to lazy to make a getter
-        return True
+        return desired_reservation._id
 
     @LoggerForReservations.library_check_reservation
     def check_reservation(self, user, book, date):
-        res = any([res.identify(date, book, user) for res in self._reservations])
-        return res
+        return any([res.identify(date, book, user) for res in self._reservations])
 
     @LoggerForReservations.library_change_reservation
     def change_reservation(self, user, book, date, new_user):
