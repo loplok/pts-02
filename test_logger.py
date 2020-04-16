@@ -10,21 +10,24 @@ class LoggerTest(unittest.TestCase):
         self.first_res = Reservation(1, 5, "Inferno", "Patrik")
 
     def test_reservation_init(self):
-        self.assertEquals(self.first_res.messageToPrint, "Created a reservation with id {} of Inferno from 1 "
-                                                         "to 5 for Patrik".format(self.first_res._id))
+        self.assertEqual(LoggerForReservations.messageToPrint, "Created a reservation with id {} of Inferno from 1 "
+                                                               "to 5 for Patrik.".format(self.first_res._id))
 
     def test_reservation_overlap(self):
         self.second_res = Reservation(5, 6, "Inferno2", "Martin")
         LoggerForReservations.reservation_is_overlapping(Reservation.overlapping(self.first_res, self.second_res))
-        self.assertEquals(self.first_res.messageToPrint, "Reservations {} and {} do overlap.".
-                          format(self.first_res._id, self.second_res._id))
+        self.assertEqual(LoggerForReservations.messageToPrint, "Reservations {} and {} do overlap.".
+                         format(self.first_res._id, self.second_res._id))
 
         self.second_res = Reservation(2, 3, "Inferno3", "Richard")
         LoggerForReservations.reservation_is_overlapping(Reservation.overlapping(self.first_res, self.second_res))
-        self.assertEquals(self.first_res.messageToPrint, "Reservations {} and {} do not overlap.".
-                          format(self.first_res._id, self.second_res._id))
+        self.assertEqual(LoggerForReservations.messageToPrint, "Reservations {} and {} do not overlap.".
+                         format(self.first_res._id, self.second_res._id))
 
         self.second_res = Reservation(6, 10, "Inferno", "Martin")
         LoggerForReservations.reservation_is_overlapping(Reservation.overlapping(self.first_res, self.second_res))
-        self.assertEquals(self.first_res.messageToPrint, "Reservations {} and {} do not overlap.".
+        self.assertEquals(LoggerForReservations.messageToPrint, "Reservations {} and {} do not overlap.".
                           format(self.first_res._id, self.second_res._id))
+
+    def test_reservation_includes(self):
+        pass

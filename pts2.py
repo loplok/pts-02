@@ -48,7 +48,8 @@ class LoggerForReservations:
                 LoggerForReservations.messageToPrint = "Reservation {} included".format(is_reserved)
             else:
                 if user not in self._users:
-                    LoggerForReservations.messageToPrint = ("We cannot reserve book {} for {} ".format(book, user) +
+                    LoggerForReservations.messageToPrint = ("We cannot reserve book"
+                                                            " {} for {} ".format(book, user) +
                                                             "from {} to {}. User does not exist.".format(date_from,
                                                                                                          date_to))
                     return False
@@ -59,13 +60,13 @@ class LoggerForReservations:
                     return False
                 elif self._books.get(book, 0) == 0:
                     LoggerForReservations.messageToPrint = (
-                            "We cannot reserve book {} for {} from {} ".format(book, user, date_from)
-                            + "to {}. We do not have that book.".format(date_to))
+                            "We cannot reserve book {} for {} from {} "
+                            "to {}. We do not have that book.".format(book, user, date_from, date_to))
                     return False
                 else:
-                    LoggerForReservations.messageToPrint = (
-                            "We cannot reserve book {} for {} from {} ".format(book, user, date_from)
-                            + "to {} . We do not have enough books.".format(date_to))
+                    LoggerForReservations.messageToPrint = ("We cannot reserve book"
+                                                            " {} for {} from {} ".format(book, user, date_from))
+                    ("to {} . We do not have enough books.".format(date_to))
                     return False
             return True
 
@@ -93,7 +94,7 @@ class LoggerForReservations:
                                                                                                               date)
             elif new_user not in self._users:
                 LoggerForReservations.messageToPrint = ("Cannot change the reservation as {} " +
-                                                        "does not exist.".format(new_user))
+                                                        "does not exist.").format(new_user)
             else:
                 LoggerForReservations.messageToPrint = "Reservation for {} of {} on {} change to {}.".format(user, book,
                                                                                                              date,
@@ -108,8 +109,8 @@ class LoggerForReservations:
         def wrapper(self, *args, **kwargs):
             function(self, *args, **kwargs)
             LoggerForReservations.messageToPrint = ("Created a reservation with id {} of {} " +
-                                                    "from {} to {} for {}.".
-                                                    format(self._id, self._book, self._from, self._to, self._for))
+                                                    "from {} to {} for {}.").format(self._id, self._book,
+                                                                                    self._from, self._to, self._for)
 
         return wrapper
 
@@ -166,14 +167,13 @@ class LoggerForReservations:
         def wrapper(self, for_):
             function(self, for_)
             LoggerForReservations.messageToPrint = "Reservation updated to {}.".format(for_)
-
         return wrapper
 
 
 class Reservation(object):
     _ids = count(0)
 
-    @LoggerForReservations.library_init
+    @LoggerForReservations.reservation_init
     def __init__(self, from_, to, book, for_):
         self._id = next(Reservation._ids)
         self._from = from_
@@ -184,8 +184,7 @@ class Reservation(object):
 
     @LoggerForReservations.reservation_is_overlapping
     def overlapping(self, other):
-        return (self._book == other._book and self._to >= other._from
-                and self._to >= other._from)
+        return (self._book == other._book and self._to >= other._from)
 
     @LoggerForReservations.reservation_includes
     def includes(self, date):
@@ -205,6 +204,7 @@ class Reservation(object):
     @LoggerForReservations.reservation_change_for
     def change_for(self, for_):
         self._for = for_
+        self._changes += 1
 
 
 class Library(object):
