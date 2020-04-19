@@ -57,14 +57,14 @@ class ReservationMess(Reservation):
 
     def identify(self, date, book, for_):
         result = super().identify(date, book, for_)
-        if result[0]:
+        if result:
             self._message = "Reservation {} is valid {} of {} on {}.".format(self._id, for_, book, date)
         else:
-            if result[1] == "book":
+            if book != self._book:
                 self._message = "Reservation {} reserves {} not {}.".format(self._id, self._book, book)
-            elif result[1] == "for":
+            elif for_ != self._for:
                 self._message = "Reservation {} is for {} not {}.".format(self._id, self._for, for_)
-            elif result[1] == "date":
+            elif not self.includes(date):
                 self._message = "Reservation {} is from {} to {} which ".format(self._id, self._from, self._to)
                 self._message += "does not include {}.".format(date)
         return result
@@ -103,7 +103,7 @@ class LoggerForReservations(ReservationMess):
 
 
 class Library(object):
-    def __init__(self, reservations_factory = Reservation):
+    def __init__(self, reservations_factory=Reservation):
         self._users = set()
         self._books = {}  # maps name to count
         self._reservations = []  # Reservations sorted by from
@@ -173,28 +173,27 @@ class LibraryMess(Library):
     def reserve_book(self, user, book, date_from, date_to):
         is_reserved = super().reserve_book(user, book, date_from, date_to)
         if is_reserved >= 0:
-            LoggerForReservations.messageToPrint = "Reservation {} included".format(is_reserved)
+            self._message = "Reservation {} included.".format(is_reserved)
         else:
             if user not in self._users:
-                LoggerForReservations.messageToPrint = ("We cannot reserve book"
-                                                        " {} for {} ".format(book, user) +
-                                                        "from {} to {}. User does not exist.".format(date_from,
-                                                                                                     date_to))
+                self._message = ("We cannot reserve book"
+                                 " {} for {} ".format(book, user) +
+                                 "from {} to {}. User does not exist.".format(date_from,
+                                                                              date_to))
                 return False
             elif date_to < date_from:
-                LoggerForReservations.messageToPrint = ("We cannot reserve book {} for {}".format(book, user) +
-                                                        " from {} to {}.".format(date_from,
-                                                                                 date_to) + " Incorrect dates.")
+                self._message = ("We cannot reserve book {} for {}".format(book, user) +
+                                 " from {} to {}.".format(date_from,
+                                                          date_to) + " Incorrect dates.")
                 return False
             elif self._books.get(book, 0) == 0:
-                LoggerForReservations.messageToPrint = (
+                self._message = (
                     "We cannot reserve book {} for {} from {} "
                     "to {}. We do not have that book.".format(book, user, date_from, date_to))
                 return False
             else:
-                LoggerForReservations.messageToPrint = ("We cannot reserve book"
-                                                        " {} for {} from {} ".format(book, user, date_from))
-                ("to {} . We do not have enough books.".format(date_to))
+                self._message = "We cannot reserve book {} for {} from {} to {}.".format(book, user, date_from, date_to)
+                self._message += " We do not have enough books."
                 return False
         return True
 
@@ -203,22 +202,22 @@ class LibraryMess(Library):
         str = 'exists'
         if not is_added:
             str = 'does not exist'
-        LoggerForReservations.messageToPrint = "Reservation for {} of {} on {} {}.".format(user, book, date, str)
+        self._message = "Reservation for {} of {} on {} {}.".format(user, book, date, str)
         return is_added
 
     def change_reservation(self, user, book, date, new_user):
         is_identical_reservation = super().change_reservation(user, book, date, new_user)
         if not is_identical_reservation:
-            LoggerForReservations.messageToPrint = "Reservation for {} of {} on {} does not exist".format(user,
-                                                                                                          book,
-                                                                                                          date)
+            self._message = "Reservation for {} of {} on {} does not exist".format(user,
+                                                                                   book,
+                                                                                   date)
         elif new_user not in self._users:
-            LoggerForReservations.messageToPrint = ("Cannot change the reservation as {} " +
-                                                    "does not exist.").format(new_user)
+            self._message = ("Cannot change the reservation as {} " +
+                             "does not exist.").format(new_user)
         else:
-            LoggerForReservations.messageToPrint = "Reservation for {} of {} on {} change to {}.".format(user, book,
-                                                                                                         date,
-                                                                                                         new_user)
+            self._message = "Reservation for {} of {} on {} change to {}.".format(user, book,
+                                                                                  date,
+                                                                                  new_user)
         return is_identical_reservation
 
 
