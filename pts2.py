@@ -1,50 +1,6 @@
 from itertools import count
 
 
-# decorators used for Library - type functions used for creating strings
-class ReservationMess(Reservation):
-    def __init__(self, from_, to, book, for_):
-        super().__init__(from_, to, book, for_)
-        self._message = "Created a reservation with id {} of {}".format(self._id, self._book)
-        self._message += " from {} to {} for {}.".format(self._from, self._to, self._for)
-
-    def overlapping(self, other):
-        result = super().overlapping(other)
-        str = 'do'
-        if not result:
-            str = 'do not'
-        self._message = "Reservations {} and {} {} overlap".format(self._id, other._id, str)
-        return result
-
-    def includes(self, date):
-        result = super().includes(date)
-        str = 'includes'
-        if not result:
-            str = 'does not include'
-        self._message = "Reservation {} {} {}".format(self._id, str, date)
-        return result
-
-    def identify(self, date, book, for_):
-        result = super().identify(date, book, for_)
-        if result[0]:
-            self._message = "Reservation {} is valid {} of {} on {}.".format(self._id, for_, book, date)
-        else:
-            if result[1] == "book":
-                self._message = "Reservation {} reserves {} not {}.".format(self._id,self._book, book)
-            elif result[1] == "for":
-                self._message = "Reservation {} is for {} not {}.".format(self._id, self._for, for_)
-            elif result[1] == "date":
-                self._message = "Reservation {} is from {} to {} which ".format(self._id, self._from, self._to)
-                self._message += "does not include {}.".format(date)
-        return result
-
-    def change_for(self, for_):
-        old_for = self._for
-        result = super().change_for(for_)
-        self._message = "Reservation {} moved from {} to {}".format(self._id, old_for, for_)
-        return result
-
-
 class Reservation(object):
     _ids = count(0)
 
@@ -77,6 +33,48 @@ class Reservation(object):
         self._changes += 1
 
 
+class ReservationMess(Reservation):
+    def __init__(self, from_, to, book, for_):
+        super().__init__(from_, to, book, for_)
+        self._message = "Created a reservation with id {} of {}".format(self._id, self._book)
+        self._message += " from {} to {} for {}.".format(self._from, self._to, self._for)
+
+    def overlapping(self, other):
+        result = super().overlapping(other)
+        str = 'do'
+        if not result:
+            str = 'do not'
+        self._message = "Reservations {} and {} {} overlap".format(self._id, other._id, str)
+        return result
+
+    def includes(self, date):
+        result = super().includes(date)
+        str = 'includes'
+        if not result:
+            str = 'does not include'
+        self._message = "Reservation {} {} {}".format(self._id, str, date)
+        return result
+
+    def identify(self, date, book, for_):
+        result = super().identify(date, book, for_)
+        if result[0]:
+            self._message = "Reservation {} is valid {} of {} on {}.".format(self._id, for_, book, date)
+        else:
+            if result[1] == "book":
+                self._message = "Reservation {} reserves {} not {}.".format(self._id, self._book, book)
+            elif result[1] == "for":
+                self._message = "Reservation {} is for {} not {}.".format(self._id, self._for, for_)
+            elif result[1] == "date":
+                self._message = "Reservation {} is from {} to {} which ".format(self._id, self._from, self._to)
+                self._message += "does not include {}.".format(date)
+        return result
+
+    def change_for(self, for_):
+        old_for = self._for
+        result = super().change_for(for_)
+        self._message = "Reservation {} moved from {} to {}".format(self._id, old_for, for_)
+        return result
+
 
 class LoggerForReservations(ReservationMess):
     def __init__(self, from_, to, book, for_):
@@ -105,10 +103,10 @@ class LoggerForReservations(ReservationMess):
 
 
 class Library(object):
-    def __init__(self):
-            self._users = set()
-            self._books = {}  # maps name to count
-            self._reservations = []  # Reservations sorted by from
+    def __init__(self, reservations_factory = Reservation):
+        self._users = set()
+        self._books = {}  # maps name to count
+        self._reservations = []  # Reservations sorted by from
 
     def add_user(self, name):
         if name in self._users:
@@ -169,7 +167,7 @@ class LibraryMess(Library):
 
     def add_book(self, name):
         result = super().add_book(name)
-        self._message = "Book {} added. We have {} copies of the book.".format(name, self._book[name])
+        self._message = "Book {} added. We have {} copies of the book.".format(name, self._books[name])
         return result
 
     def reserve_book(self, user, book, date_from, date_to):
@@ -209,7 +207,7 @@ class LibraryMess(Library):
         return is_added
 
     def change_reservation(self, user, book, date, new_user):
-        is_identical_reservation = super.change_reservation(self, user, book, date, new_user)
+        is_identical_reservation = super().change_reservation(user, book, date, new_user)
         if not is_identical_reservation:
             LoggerForReservations.messageToPrint = "Reservation for {} of {} on {} does not exist".format(user,
                                                                                                           book,
@@ -253,6 +251,3 @@ class LoggerForLibraryMess(LibraryMess):
         ret = super().change_reservation(user, book, date, new_user)
         print(super()._message)
         return ret
-
-
-
