@@ -207,17 +207,18 @@ class LibraryMess(Library):
 
     def change_reservation(self, user, book, date, new_user):
         is_identical_reservation = super().change_reservation(user, book, date, new_user)
-        if not is_identical_reservation:
-            self._message = "Reservation for {} of {} on {} does not exist".format(user,
-                                                                                   book,
-                                                                                   date)
-        elif new_user not in self._users:
+
+        if new_user not in self._users:
             self._message = ("Cannot change the reservation as {} " +
                              "does not exist.").format(new_user)
+        elif not is_identical_reservation:
+            self._message = "Reservation for {} of {} on {} does not exist.".format(user,
+                                                                                    book,
+                                                                                    date)
         else:
-            self._message = "Reservation for {} of {} on {} change to {}.".format(user, book,
-                                                                                  date,
-                                                                                  new_user)
+            self._message = "Reservation for {} of {} on {} changed to {}.".format(user, book,
+                                                                                   date,
+                                                                                   new_user)
         return is_identical_reservation
 
 

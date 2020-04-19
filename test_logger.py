@@ -104,6 +104,20 @@ class TestLibraryMsg(unittest.TestCase):
         self.library.check_reservation("Patrik", "Inferno", 3)
         self.assertEqual(self.library._message, "Reservation for Patrik of Inferno on 3 exists.")
 
+    def test_library_change_reservation(self):
+        self.library.add_book("Inferno")
+        self.library.add_user("Patrik")
+        self.library.add_user("Rici")
+        self.assertEqual(self.library.reserve_book("Patrik", "Inferno", 1, 5), True)
+
+        self.library.change_reservation("Patrik", "Inferno", 1, "Rici")
+        self.assertEqual("Reservation for Patrik of Inferno on 1 changed to Rici.", self.library._message)
+
+        self.library.check_reservation("Rici", "Inferno", 1)
+        self.assertEqual(self.library._message, "Reservation for Rici of Inferno on 1 exists.")
+
+
+
 
 
 
