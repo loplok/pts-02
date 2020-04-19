@@ -45,7 +45,6 @@ class ReservationMess(Reservation):
         return result
 
 
-
 class Reservation(object):
     _ids = count(0)
 
@@ -105,80 +104,55 @@ class LoggerForReservations(ReservationMess):
         return ret
 
 
-    class Library(object):
-
-        def __init__(self):
+class Library(object):
+    def __init__(self):
             self._users = set()
             self._books = {}  # maps name to count
             self._reservations = []  # Reservations sorted by from
 
-        def add_user(self, name):
-            if name in self._users:
-                return False
-            self._users.add(name)
-            return True
+    def add_user(self, name):
+        if name in self._users:
+            return False
+        self._users.add(name)
+        return True
 
-        def add_book(self, name):
-            self._books[name] = self._books.get(name, 0) + 1
+    def add_book(self, name):
+        self._books[name] = self._books.get(name, 0) + 1
 
-        def reserve_book(self, user, book, date_from, date_to):
-            book_count = self._books.get(book, 0)
-            if user not in self._users:
-                return -1
-            if date_from > date_to:
-                return -1
-            if book_count == 0:
-                return -1
-            desired_reservation = Reservation(date_from, date_to, book, user)
-            relevant_reservations = [res for res in self._reservations
-                                     if desired_reservation.overlapping(res)] + [desired_reservation]
-            # we check that if we add this reservation then for every reservation record that starts
-            # between date_from and date_to no more than book_count books are reserved.
-            for from_ in [res._from for res in relevant_reservations]:
-                if desired_reservation.includes(from_):
-                    if sum([rec.includes(from_) for rec in relevant_reservations]) > book_count:
-                        return -1
-            self._reservations += [desired_reservation]
-            self._reservations.sort(key=lambda x: x._from)  # to lazy to make a getter
-            return desired_reservation._id
+    def reserve_book(self, user, book, date_from, date_to):
+        book_count = self._books.get(book, 0)
+        if user not in self._users:
+            return -1
+        if date_from > date_to:
+            return -1
+        if book_count == 0:
+            return -1
+        desired_reservation = Reservation(date_from, date_to, book, user)
+        relevant_reservations = [res for res in self._reservations
+                                 if desired_reservation.overlapping(res)] + [desired_reservation]
+        # we check that if we add this reservation then for every reservation record that starts
+        # between date_from and date_to no more than book_count books are reserved.
+        for from_ in [res._from for res in relevant_reservations]:
+            if desired_reservation.includes(from_):
+                if sum([rec.includes(from_) for rec in relevant_reservations]) > book_count:
+                    return -1
+        self._reservations += [desired_reservation]
+        self._reservations.sort(key=lambda x: x._from)  # to lazy to make a getter
+        return desired_reservation._id
 
-        def check_reservation(self, user, book, date):
-            return any([res.identify(date, book, user) for res in self._reservations])
+    def check_reservation(self, user, book, date):
+        return any([res.identify(date, book, user) for res in self._reservations])
 
-        def change_reservation(self, user, book, date, new_user):
-            relevant_reservations = [res for res in self._reservations
-                                     if res.identify(date, book, user)]
-            if not relevant_reservations:
-                return False
-            if new_user not in self._users:
-                return False
-            relevant_reservations[0].change_for(new_user)
-            return True
+    def change_reservation(self, user, book, date, new_user):
+        relevant_reservations = [res for res in self._reservations
+                                 if res.identify(date, book, user)]
+        if not relevant_reservations:
+            return False
+        if new_user not in self._users:
+            return False
+        relevant_reservations[0].change_for(new_user)
+        return True
 
-
-    def library_init(function):
-        def wrapper(self, *args, **kwargs):
-            function(self, *args, **kwargs)
-            LoggerForReservations.messageToPrint = "Library created."
-        return wrapper
-
-    def library_add_user(function):
-        def wrapper(self, name):
-            is_added = function(self, name)
-            LoggerForReservations.messageToPrint = "User {} created".format(name)
-            if not is_added:
-                LoggerForReservations.messageToPrint = "User {} cannot be created, one with that name exists.".format(
-                    name)
-            return is_added
-        return wrapper
-
-    def library_add_book(function):
-        def wrapper(self, name):
-            function(self, name)
-            LoggerForReservations.messageToPrint = "Book {} added. We have {} copies of the book".format(name,
-                                                                                                         self._books[
-                                                                                                             name])
-            return wrapper
 
 class LibraryMess(Library):
     def __init__(self, reservations_factory=Reservation):
@@ -248,6 +222,37 @@ class LibraryMess(Library):
                                                                                                          date,
                                                                                                          new_user)
         return is_identical_reservation
+
+
+class LoggerForLibraryMess(LibraryMess):
+    def __init__(self, reservations_factory=Reservation):
+        super().__init__(reservations_factory)
+        print(super()._message)
+
+    def add_user(self, name):
+        ret = super().add_user(name)
+        print(super()._message)
+        return ret
+
+    def add_book(self, name):
+        ret = super().add_book(name)
+        print(super()._message)
+        return ret
+
+    def reserve_book(self, user, book, date_from, date_to):
+        ret = super().reserve_book(user, book, date_from, date_to)
+        print(super()._message)
+        return ret
+
+    def check_reservation(self, user, book, date):
+        ret = super().check_reservation(user, book, date)
+        print(super()._message)
+        return ret
+
+    def change_reservation(self, user, book, date, new_user):
+        ret = super().change_reservation(user, book, date, new_user)
+        print(super()._message)
+        return ret
 
 
 
